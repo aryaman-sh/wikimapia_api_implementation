@@ -79,7 +79,7 @@
 		  
 	</div>
 	
-	<br>
+
 	
 	<div id="alertsucess" class="alert alert-info">
 				
@@ -153,21 +153,21 @@ var centro_geojson = L.geoJson();
 
 //ENABLE FOR SATELLITE VIEW
 
-googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
-    maxZoom: 20,
-    subdomains:['mt0','mt1','mt2','mt3'],
-    attribution: 'Copyright google Maps'
-});
-googleSat.addTo(map);
+//googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+//    maxZoom: 20,
+//    subdomains:['mt0','mt1','mt2','mt3'],
+//    attribution: 'Copyright google Maps'
+//});
+//googleSat.addTo(map);
 
 //ENABLE FOR GOOGLE STREETS VIEW
 
-//googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
-//    maxZoom: 20,
-//    subdomains:['mt0','mt1','mt2','mt3'],
-//    attribution: 'Copyright Google Maps'
-//});
-//googleStreets.addTo(map);
+googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3'],
+    attribution: 'Copyright Google Maps'
+});
+googleStreets.addTo(map);
 
 	
 	document.getElementById("categoryId").value = "hospital";
@@ -200,6 +200,9 @@ else {
 	
 	poly = [];
 	poly_fc = [];
+
+	poly_current = [];
+	
 	poly_geojson.clearLayers();
 	
 
@@ -216,15 +219,16 @@ else {
 	
 	for (var i in dict) {
 	if(categoryId == dict[i].Name){categoryId_number = dict[i].Id}
-	else{}
+	else{}var poly_fc = turf.featurecollection(poly);
+
 	}
 	
-	var queryUrl = "http://api.wikimapia.org/?key=08777B59-FEF373B4-73B945AD-69F2898C-0416CA2F-15F89FDD-095B897D-D446E7ED&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json";
+	var queryUrl = "http://api.wikimapia.org/?key=08777B59-97E2EACB-A562F1BA-83018EB3-C90E33B5-151FEDCF-35FF96FF-480C5C37&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json";
 	
-	console.log(queryUrl)
+	//console.log(queryUrl)
 	
 	$.getJSON( queryUrl, function( data ) {
-		console.log(data);
+		//console.log(data);
 		
 		if (!data.folder) { 
 		
@@ -271,20 +275,87 @@ else {
 		
 		}
 
-		//binding tooltip label for viewing property:Name inside polygon
-		poly_geojson = L.geoJson(poly,{
-		onEachFeature: function(feature, layer) {
-			layer.bindTooltip("<h4>"+feature.properties.name+"</h4>", {direction: "center" , permanent: true, className: 'Namecss'})
-		}
-		}).addTo(map);
+		
+		var collection = {
+    		"type": "FeatureCollection",
+    		"features": []
+		};
 
 		
-		poly_geojson = L.geoJson(poly,{
-		onEachFeature: function(feature, layer) {
-		if (feature.properties.sourceLang == "en") {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
-		else {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
+
+		function style(feature) {
+    		return {
+        		fillColor: '#DB9B1A',
+        		weight: 3,
+        		opacity: 0.5,
+        		color: 'white',
+        		dashArray: '5',
+        		fillOpacity: 0.7
+    		};
 		}
+
+		function highlightFeature(e) {
+    		var layer = e.target;
+
+    		layer.setStyle({
+        		weight: 5,
+        		color: '#666',
+        		dashArray: '',
+        		fillOpacity: 0.7
+    		});
+
+    		if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        	layer.bringToFront();
+    		}
+		}
+
+		function resetHighlight(e) {
+    		geojson.resetStyle(e.target);
+		}
+
+		
+		function polycollector(e) {
+			
+			console.log(e.sourceTarget.feature)			
+
+			map.fitBounds(e.target.getBounds());
+				
+		}
+
+		function onEachFeature(feature, layer) {
+			layer.bindPopup("<h4>"+feature.properties.name+"</h4>")
+    		
+    		layer.bindTooltip("<h4>"+feature.properties.name+"</h4>", {direction: "center" , permanent: true, className: 'Namecss'})
+    		
+    		layer.on({
+        		mouseover: highlightFeature,
+        		mouseout: resetHighlight,
+        		click: polycollector
+    		});
+		}
+
+		geojson = L.geoJson(poly, {
+    		style: style,
+    		onEachFeature: onEachFeature
 		}).addTo(map);
+
+
+
+		//binding tooltip label for viewing property:Name inside polygon
+		
+		//poly_geojson = L.geoJson(poly,{
+		//onEachFeature: function(feature, layer) {
+		//	layer.bindTooltip("<h4>"+feature.properties.name+"</h4>", {direction: "center" , permanent: true, className: 'Namecss'})
+		//}
+		//}).addTo(map);
+
+		
+		//poly_geojson = L.geoJson(poly,{
+		//onEachFeature: function(feature, layer) {
+		//if (feature.properties.sourceLang == "en") {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
+		//else {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
+		//}
+		//}).addTo(map);
 		
 		centro_geojson = L.geoJson(centro,{
 		onEachFeature: function(feature, layer) {
@@ -295,6 +366,7 @@ else {
 		
 		
 		var centro_fc = turf.featurecollection(centro);
+		
 		var poly_fc = turf.featurecollection(poly);
 		
 		var data_centro = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(centro_fc));
