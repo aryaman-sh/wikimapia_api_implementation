@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta charset=utf-8 />
-	<title>MAP</title>
+	<title>Map exporter</title>
 	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 	<link href="css/stylish-portfolio.css" rel="stylesheet">
 	<link rel="stylesheet" href="src/leaflet/leaflet.css" />
@@ -13,10 +13,6 @@
 </head>
 
 <body>
-	
-	<!--
-	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDT1ZNo5GqKA0TaoKgH7oornVHXEaCWxHo" async defer></script>
-	<script src='https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js'></script>-->
 	<script src="src/categories.js"></script>
 	<script src="src/leaflet/leaflet.js"></script>
 	<script src='src/jquery/jquery-1.11.3.min.js'></script>
@@ -26,22 +22,18 @@
 	<script src="src/bootstrap3-typeahead.js"></script>
 	<script src="src/leaflet-search-master/dist/leaflet-search.min.js"></script>
 
-
-<div class="container-fluid">
-	
+<div class="container-fluid">	
 	<div class="row">
 		  <div class="col-md-4">	  
 			<form class="form">
-		  
 		  <br>
 		  <div class="form-group">
 		    <a href="#" class="btn btn-dark" data-toggle="modal" data-target="#myModal">Category list</a>
 		  </div>
 		  <br>
 		  <div>
-			<button type="button" class="btn btn-dark" onclick="run()">  Search  </button><br>
+			<button type="button" class="btn btn-dark" onclick="search()">  Search  </button><br>
 			</div>
-          
 			<div class="form-group col-xs-3">
 			</div>
 			<br>
@@ -59,15 +51,8 @@
 				<label for="ex1">Centre lng</label>
 				<input disabled class="form-control inputsm" id="centre2" type="text">
 			</div>
-
-			
 			</div>	
 </form>	
- 
-
-
-		  
-		  
 			<div id="map">
 				<div id="shadow">
 				</div>
@@ -75,28 +60,20 @@
 				</div>
 			</div>
 			<em id="warningzoom" style="color:red"></em>
-		  
-		  
+	<br>    
 	</div>
-	
-	<!-- Div for exporting each feature on load-->
-
-	<div id="alertsucess" class="alert alert-info">
-			<a id="export_element"></a>
+	<div id="alert_each" class="alert alert-info">
+			<b id="export_element"></b>
 	</div>
 
-	
-	<div id="alertsucess" class="alert alert-info">
-				
+	<div id="alert_all" class="alert alert-info">
 				<b id="number_returned"></b>  <a id="export_points" ></a>  <a id="export_poly" ></a>				
 	</div>
 	
 </div>
-<!--<div class="col-md-8">-->
 <div id="myModal" class="modal fade" role="dialog">
   <div class="modal-dialog">
-
-    <!-- Modal content-->
+    
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -125,19 +102,20 @@
 </div>
 
 <script>
+
 $(function () {
   $('[data-toggle="tooltip"]').tooltip()
 })
 
 $("#spin_div").hide();
 $("#shadow").hide();
-$("#alertsucess").hide()
+$("#alert_each").hide()
+$("#alert_all").hide()
 
 for (var i in dict){
 var row ='<tr><td>'+dict[i].use+'</td><td>'+dict[i].Name+'</td><td>'+dict[i].Id+'</td></tr>';
 $("#category_table").append(row);
 }
-
 
 var type_choices =[];
 for (var i in dict){type_choices.push(dict[i].Name)}
@@ -145,8 +123,6 @@ for (var i in dict){type_choices.push(dict[i].Name)}
 $("#categoryId").typeahead({        
         source: type_choices
 });
-
-
 
 var poly = [];
 var poly_geojson = L.geoJson();
@@ -156,16 +132,12 @@ var centro_geojson = L.geoJson();
 
 	var map = L.map('map').setView([28.5542,77.2076 ], 15);
 
-//ENABLE FOR SATELLITE VIEW
-
 //googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
 //    maxZoom: 20,
 //    subdomains:['mt0','mt1','mt2','mt3'],
 //    attribution: 'Copyright google Maps'
 //});
 //googleSat.addTo(map);
-
-//ENABLE FOR GOOGLE STREETS VIEW
 
 googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
     maxZoom: 20,
@@ -176,43 +148,31 @@ googleStreets.addTo(map);
 
 	
 	document.getElementById("categoryId").value = "hospital";
-	//Getting coordinates of current map cantre
 	document.getElementById("centre1").value = ((map.getBounds()._northEast.lat + map.getBounds()._southWest.lat)/2);
 	document.getElementById("centre2").value = ((map.getBounds()._northEast.lng + map.getBounds()._southWest.lng)/2);
-	//dynamic centre
 	map.on('move', function(e) {
 	document.getElementById("centre1").value = ((map.getBounds()._northEast.lat + map.getBounds()._southWest.lat)/2);
 	document.getElementById("centre2").value = ((map.getBounds()._northEast.lng + map.getBounds()._southWest.lng)/2);
 	});
-	
 	map.on('zoomend', function(e) {
     var mapzoom = map.getZoom();
-	console.log(mapzoom);
 	})
-	
 
-	
-function run() {
+function search() {
 
 if (document.getElementById("categoryId").value == '') {alert("Please enter a category")}
 
 else {
 	$("#spin_div").show();
 	$("#shadow").show();
-	$("#alertsucess").show();
+	$("#alert_all").show();
+
 	export_points.innerHTML = "";
 	export_poly.innerHTML = "";
 	export_element.innerHTML= "";
-	
-
 	poly = [];
 	poly_fc = [];
-
-	
-	
 	poly_geojson.clearLayers();
-	
-
 	centro = [];
 	centro_fc = [];
 	centro_geojson.clearLayers();
@@ -227,16 +187,11 @@ else {
 	for (var i in dict) {
 	if(categoryId == dict[i].Name){categoryId_number = dict[i].Id}
 	else{}var poly_fc = turf.featurecollection(poly);
-
 	}
-	
 	var queryUrl = "http://api.wikimapia.org/?key=08777B59-97E2EACB-A562F1BA-83018EB3-C90E33B5-151FEDCF-35FF96FF-480C5C37&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json";
-	
-	
-	
+
 	$.getJSON( queryUrl, function( data ) {
-		
-		
+				
 		if (!data.folder) { 
 		
 			if(data.debug[0]){
@@ -249,7 +204,6 @@ else {
 			$("#spin_div").hide();
 				$("#shadow").hide();}
 			
-
 		} else{
 		
 		if (data.folder.length == 1) {number_returned.innerHTML = "The query returned "+data.folder.length+" feature.";}
@@ -264,14 +218,11 @@ else {
 			item2 = item.coordinates;
 			coordinates.push([item.polygon[y].x,item.polygon[y].y]);
 			
-			
 			}
 		var sourceLang = item.language_iso;
 		var transUrl = "https://translate.google.fr/?hl=en#"+sourceLang+"/en/"+encodeURI(item.name)+""
 		poly.push(turf.polygon([coordinates],{"name":item.name, "type":categoryId, "sourceLang": sourceLang,"transUrl": transUrl}));
 		}
-		
-		
 		
 		for (var i in poly) {
 		centro.push(turf.centroid(poly[i]));
@@ -282,13 +233,10 @@ else {
 		
 		}
 
-		
 		var collection = {
     		"type": "FeatureCollection",
     		"features": []
 		};
-
-		
 
 		function style(feature) {
     		return {
@@ -322,58 +270,30 @@ else {
 
 		
 		function polycollector(e) {
-			//get data
 			var poly_current = e.sourceTarget.feature
 			console.log(poly_current)
-			// make type:featurecollection using turf.js
 			var poly_current_step = turf.featurecollection(poly_current)
 			console.log(poly_current_step)
-			//convert data to geijsin format
 			var poly_current_data = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(poly_current_step))
 			console.log(poly_current_data)
-
 			$('<a href="data:' + poly_current_data + '" download="'+categoryId+'_poly.geojson">Export clicked on feature</a>').appendTo('#export_element')
-
-			//console.clear()
-			//console.log(e.sourceTarget.feature)			
+			$("#alert_each").show()			
 			map.fitBounds(e.target.getBounds());
-				
 		}
 
 		function onEachFeature(feature, layer) {
 			layer.bindPopup("<h4>"+feature.properties.name+"</h4>")
-    		
     		layer.bindTooltip("<h4>"+feature.properties.name+"</h4>", {direction: "center" , permanent: true, className: 'Namecss'})
-    		
     		layer.on({
         		mouseover: highlightFeature,
         		mouseout: resetHighlight,
         		click: polycollector
     		});
 		}
-
 		geojson = L.geoJson(poly, {
     		style: style,
     		onEachFeature: onEachFeature
 		}).addTo(map);
-
-
-
-		//binding tooltip label for viewing property:Name inside polygon
-		
-		//poly_geojson = L.geoJson(poly,{
-		//onEachFeature: function(feature, layer) {
-		//	layer.bindTooltip("<h4>"+feature.properties.name+"</h4>", {direction: "center" , permanent: true, className: 'Namecss'})
-		//}
-		//}).addTo(map);
-
-		
-		//poly_geojson = L.geoJson(poly,{
-		//onEachFeature: function(feature, layer) {
-		//if (feature.properties.sourceLang == "en") {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
-		//else {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
-		//}
-		//}).addTo(map);
 		
 		centro_geojson = L.geoJson(centro,{
 		onEachFeature: function(feature, layer) {
@@ -381,24 +301,16 @@ else {
 		else {layer.bindPopup("<h4>"+feature.properties.name+"</h4>")}
 		}
 		}).addTo(map);
-		
-		
+				
 		var centro_fc = turf.featurecollection(centro);
-		
 		var poly_fc = turf.featurecollection(poly);
-		
 		var data_centro = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(centro_fc));
 		var data_poly = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(poly_fc));
-		
 		$('<a href="data:' + data_centro + '" download="'+categoryId+'_points.geojson">Export as points</a>').appendTo('#export_points');
 		$('<a href="data:' + data_poly + '" download="'+categoryId+'_poly.geojson">Export as polygons</a>').appendTo('#export_poly');
-		
 		$("#spin_div").hide();
 		$("#shadow").hide();
-		
 	}})
-	
-	
 	
   .fail(function() {
     alert( "error, please retry later" );
@@ -406,13 +318,7 @@ else {
   
   }
 	
-	
-	
 	}
-	
-
-
-	
 	
 var opts = {
   lines: 13 // The number of lines to draw
@@ -439,9 +345,6 @@ var opts = {
 var target = document.getElementById('spin_div')
 var spinner = new Spinner(opts).spin(target);
 	
-	
-	
-	
 map.addControl( new L.Control.Search({
 			url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
 			jsonpParam: 'json_callback',
@@ -455,7 +358,6 @@ map.addControl( new L.Control.Search({
 			zoom:10
 		}) );	
 		
-
 </script>
 </body>
 </html>
