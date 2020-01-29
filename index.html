@@ -3,7 +3,7 @@
 <html>
 <head>
 	<meta charset=utf-8 />
-	<title>Map exporter</title>
+	<title>Map data exporter</title>
 	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
 	<link href="css/stylish-portfolio.css" rel="stylesheet">
 	<link rel="stylesheet" href="src/leaflet/leaflet.css" />
@@ -320,30 +320,32 @@ else {
 	
 	}
 	
-var opts = {
-  lines: 13 // The number of lines to draw
+var colorArray = ['#f31600', '#f31600','#f31600','#f31600','#f31600','#f31600', '#00adf3', '#00adf3','#00adf3','#00adf3','#00adf3','#00adf3',];
+
+var spinner_settings = {
+  lines: 12 // The number of lines to draw
 , length: 28 // The length of each line
-, width: 14 // The line thickness
-, radius: 42 // The radius of the inner circle
+, width: 11 // The line thickness
+, radius: 50 // The radius of the inner circle
 , scale: 1 // Scales overall size of the spinner
 , corners: 1 // Corner roundness (0..1)
-, color: '#800080' // #rgb or #rrggbb or array of colors
+, color: colorArray // #rgb or #rrggbb or array of colors
 , opacity: 0.25 // Opacity of the lines
 , rotate: 0 // The rotation offset
 , direction: 1 // 1: clockwise, -1: counterclockwise
 , speed: 1 // Rounds per second
-, trail: 60 // Afterglow percentage
+, trail: 10 // Afterglow percentage
 , fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
 , zIndex: 2e9 // The z-index (defaults to 2000000000)
 , className: 'spinner' // The CSS class to assign to the spinner
 , top: '50%' // Top position relative to parent
 , left: '50%' // Left position relative to parent
-, shadow: false // Whether to render a shadow
+, shadow: true// Whether to render a shadow
 , hwaccel: false // Whether to use hardware acceleration
 , position: 'absolute' // Element positioning
 }
 var target = document.getElementById('spin_div')
-var spinner = new Spinner(opts).spin(target);
+var spinner = new Spinner(spinner_settings).spin(target);
 	
 map.addControl( new L.Control.Search({
 			url: 'http://nominatim.openstreetmap.org/search?format=json&q={s}',
