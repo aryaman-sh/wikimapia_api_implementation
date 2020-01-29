@@ -79,6 +79,11 @@
 		  
 	</div>
 	
+	<!-- Div for exporting each feature on load-->
+
+	<div id="alertsucess" class="alert alert-info">
+			<a id="export_element"></a>
+	</div>
 
 	
 	<div id="alertsucess" class="alert alert-info">
@@ -197,11 +202,13 @@ else {
 	$("#alertsucess").show();
 	export_points.innerHTML = "";
 	export_poly.innerHTML = "";
+	export_element.innerHTML= "";
 	
+
 	poly = [];
 	poly_fc = [];
 
-	poly_current = [];
+	
 	
 	poly_geojson.clearLayers();
 	
@@ -225,10 +232,10 @@ else {
 	
 	var queryUrl = "http://api.wikimapia.org/?key=08777B59-97E2EACB-A562F1BA-83018EB3-C90E33B5-151FEDCF-35FF96FF-480C5C37&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json";
 	
-	//console.log(queryUrl)
+	
 	
 	$.getJSON( queryUrl, function( data ) {
-		//console.log(data);
+		
 		
 		if (!data.folder) { 
 		
@@ -315,9 +322,20 @@ else {
 
 		
 		function polycollector(e) {
+			//get data
+			var poly_current = e.sourceTarget.feature
+			console.log(poly_current)
+			// make type:featurecollection using turf.js
+			var poly_current_step = turf.featurecollection(poly_current)
+			console.log(poly_current_step)
+			//convert data to geijsin format
+			var poly_current_data = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(poly_current_step))
+			console.log(poly_current_data)
 
-			console.clear()
-			console.log(e.sourceTarget.feature)			
+			$('<a href="data:' + poly_current_data + '" download="'+categoryId+'_poly.geojson">Export clicked on feature</a>').appendTo('#export_element')
+
+			//console.clear()
+			//console.log(e.sourceTarget.feature)			
 			map.fitBounds(e.target.getBounds());
 				
 		}
