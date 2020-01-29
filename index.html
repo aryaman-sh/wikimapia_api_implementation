@@ -131,14 +131,14 @@ var centro = [];
 var centro_geojson = L.geoJson();
 
 	var map = L.map('map').setView([28.5542,77.2076 ], 15);
-
-//googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
-//    maxZoom: 20,
-//    subdomains:['mt0','mt1','mt2','mt3'],
-//    attribution: 'Copyright google Maps'
-//});
-//googleSat.addTo(map);
-
+/*
+googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+    maxZoom: 20,
+    subdomains:['mt0','mt1','mt2','mt3'],
+    attribution: 'Copyright google Maps'
+});
+googleSat.addTo(map);
+*/
 googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
     maxZoom: 20,
     subdomains:['mt0','mt1','mt2','mt3'],
@@ -188,9 +188,8 @@ else {
 	if(categoryId == dict[i].Name){categoryId_number = dict[i].Id}
 	else{}var poly_fc = turf.featurecollection(poly);
 	}
-	var queryUrl = "http://api.wikimapia.org/?key=08777B59-97E2EACB-A562F1BA-83018EB3-C90E33B5-151FEDCF-35FF96FF-480C5C37&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json";
 
-	$.getJSON( queryUrl, function( data ) {
+	$.getJSON( "http://api.wikimapia.org/?key=08777B59-573F1DEF-2F2A3DF9-AA7DE6C7-193357A7-73162E9F-461F556C-FD7055A3&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=100000&format=json", function( data ) {
 				
 		if (!data.folder) { 
 		
@@ -340,7 +339,7 @@ var spinner_settings = {
 , className: 'spinner' // The CSS class to assign to the spinner
 , top: '50%' // Top position relative to parent
 , left: '50%' // Left position relative to parent
-, shadow: true// Whether to render a shadow
+, shadow: false// Whether to render a shadow
 , hwaccel: false // Whether to use hardware acceleration
 , position: 'absolute' // Element positioning
 }
