@@ -45,11 +45,11 @@
 		  </div>
 			<div class="form-group col-xs-6 pagination-centered text-center">
 				<label for="ex1">Centre lat</label>
-				<input disabled class="form-control inputsm" id="centre1" type="text">
+				<input type="number" class="form-control inputsm" id="centre1" type="text">
 			</div>
 			<div class="form-group col-xs-6 pagination-centered text-center">
 				<label for="ex1">Centre lng</label>
-				<input disabled class="form-control inputsm" id="centre2" type="text">
+				<input type="number" class="form-control inputsm" id="centre2" type="text">
 			</div>
 			</div>	
 </form>	
@@ -131,28 +131,38 @@ var centro = [];
 var centro_geojson = L.geoJson();
 
 	var map = L.map('map').setView([28.5542,77.2076 ], 15);
-/*
-googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
+
+
+var google_sat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',{
     maxZoom: 20,
-    subdomains:['mt0','mt1','mt2','mt3'],
-    attribution: 'Copyright google Maps'
-});
-googleSat.addTo(map);
-*/
-googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
+    subdomains:['mt0','mt1','mt2','mt3']
+}),
+    google_street = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{
     maxZoom: 20,
     subdomains:['mt0','mt1','mt2','mt3'],
     attribution: 'Copyright Google Maps'
 });
-googleStreets.addTo(map);
+
+var baseMaps = {
+    "Satellite": google_sat,
+    "Street": google_street
+};
+
+var overlays =  {
+
+    };
+
+L.control.layers(baseMaps,overlays, {position: 'topright'}).addTo(map);
 
 	
 	document.getElementById("categoryId").value = "hospital";
-	document.getElementById("centre1").value = ((map.getBounds()._northEast.lat + map.getBounds()._southWest.lat)/2);
-	document.getElementById("centre2").value = ((map.getBounds()._northEast.lng + map.getBounds()._southWest.lng)/2);
+	
+	document.getElementById("centre1").value = map.getCenter().lat
+	document.getElementById("centre2").value = map.getCenter().lng
+	
 	map.on('move', function(e) {
-	document.getElementById("centre1").value = ((map.getBounds()._northEast.lat + map.getBounds()._southWest.lat)/2);
-	document.getElementById("centre2").value = ((map.getBounds()._northEast.lng + map.getBounds()._southWest.lng)/2);
+	document.getElementById("centre1").value = map.getCenter().lat
+	document.getElementById("centre2").value = map.getCenter().lng
 	});
 	map.on('zoomend', function(e) {
     var mapzoom = map.getZoom();
@@ -177,23 +187,37 @@ else {
 	centro_fc = [];
 	centro_geojson.clearLayers();
 	
+	
 	var categoryId = document.getElementById("categoryId").value;
+
+
+	//centre lat and mapflyto is only valid when api method is set as api.getnearest
+	//use centre lat and long if given for custom search
+	var centre_lat = document.getElementById("centre1").value;
+	var centre_lon = document.getElementById("centre2").value;
+	//change view
+	map.flyTo([centre_lat, centre_lon])
+
+	//badly cooded but works somehow??
+	var top_adder_lat = map.getBounds()._northEast.lat - map.getCenter().lat
+	var top_adder_long = map.getBounds()._northEast.lng - map.getCenter().lng
+	var top = (centre_lat + top_adder_lat)
+	var right = (centre_lon +top_adder_long)
+	var bottom = (centre_lat - top_adder_lat)
+	var left = (centre_lon - top_adder_long)
+
 	var categoryId_number;
-	var top = map.getBounds()._northEast.lat;
-	var right = map.getBounds()._northEast.lng;
-	var bottom = map.getBounds()._southWest.lat;
-	var left = map.getBounds()._southWest.lng;
 	
 	for (var i in dict) {
 	if(categoryId == dict[i].Name){categoryId_number = dict[i].Id}
 	else{}var poly_fc = turf.featurecollection(poly);
 	}
 
-
-	var api_method = "http://api.wikimapia.org/?key=example&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json"
-	var api_method_2 = "http://api.wikimapia.org/?function=place.getnearest&key=example&lat="+centre1+"&lon="+centre2+"&category="+categoryId_number+"&format=json"
-
-	$.getJSON( api_method, function( data ) {
+	var api_method_bbox = "http://api.wikimapia.org/?key=example&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json"
+	//get nearest not working
+	var api_method_getnearest = "http://api.wikimapia.org/?key=example&function=place.getnearest&lat=28.5542&lon=77.2076&format=json&pack=&language=en&count=10&category=Not+approved"
+	
+	$.getJSON( api_method_bbox, function( data ) {
 				
 		if (!data.folder) { 
 		
@@ -224,7 +248,7 @@ else {
 			}
 		var sourceLang = item.language_iso;
 		var transUrl = "https://translate.google.fr/?hl=en#"+sourceLang+"/en/"+encodeURI(item.name)+""
-		poly.push(turf.polygon([coordinates],{"name":item.name, "type":categoryId, "sourceLang": sourceLang,"transUrl": transUrl}));
+		poly.push(turf.polygon([coordinates],{"id":item.id, "name":item.name, "type":categoryId, "sourceLang": sourceLang}));
 		}
 		
 		for (var i in poly) {
@@ -274,11 +298,11 @@ else {
 		
 		function polycollector(e) {
 			var poly_current = e.sourceTarget.feature
-			console.log(poly_current)
+			//console.log(poly_current)
 			var poly_current_step = turf.featurecollection(poly_current)
-			console.log(poly_current_step)
+			//console.log(poly_current_step)
 			var poly_current_data = "text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(poly_current_step))
-			console.log(poly_current_data)
+			//console.log(poly_current_data)
 			$('<a href="data:' + poly_current_data + '" download="'+categoryId+'_poly.geojson">Export clicked on feature</a>').appendTo('#export_element')
 			$("#alert_each").show()			
 			map.fitBounds(e.target.getBounds());
@@ -326,26 +350,26 @@ else {
 var colorArray = ['#f31600', '#f31600','#f31600','#f31600','#f31600','#f31600', '#00adf3', '#00adf3','#00adf3','#00adf3','#00adf3','#00adf3',];
 
 var spinner_settings = {
-  lines: 12 // The number of lines to draw
-, length: 28 // The length of each line
-, width: 11 // The line thickness
-, radius: 50 // The radius of the inner circle
-, scale: 1 // Scales overall size of the spinner
-, corners: 1 // Corner roundness (0..1)
-, color: colorArray // #rgb or #rrggbb or array of colors
-, opacity: 0.25 // Opacity of the lines
-, rotate: 0 // The rotation offset
-, direction: 1 // 1: clockwise, -1: counterclockwise
-, speed: 1 // Rounds per second
-, trail: 10 // Afterglow percentage
-, fps: 20 // Frames per second when using setTimeout() as a fallback for CSS
-, zIndex: 2e9 // The z-index (defaults to 2000000000)
-, className: 'spinner' // The CSS class to assign to the spinner
-, top: '50%' // Top position relative to parent
-, left: '50%' // Left position relative to parent
-, shadow: false// Whether to render a shadow
-, hwaccel: false // Whether to use hardware acceleration
-, position: 'absolute' // Element positioning
+  lines: 12 
+, length: 28 
+, width: 11 
+, radius: 50 
+, scale: 1 
+, corners: 1 
+, color: colorArray 
+, opacity: 0.25 
+, rotate: 0 
+, direction: 1 
+, speed: 1 
+, trail: 10 
+, fps: 20 
+, zIndex: 2e9 
+, className: 'spinner' 
+, top: '50%' 
+, left: '50%' 
+, shadow: false
+, hwaccel: false 
+, position: 'absolute' 
 }
 var target = document.getElementById('spin_div')
 var spinner = new Spinner(spinner_settings).spin(target);
