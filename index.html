@@ -189,7 +189,11 @@ else {
 	else{}var poly_fc = turf.featurecollection(poly);
 	}
 
-	$.getJSON( "http://api.wikimapia.org/?key=08777B59-573F1DEF-2F2A3DF9-AA7DE6C7-193357A7-73162E9F-461F556C-FD7055A3&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=100000&format=json", function( data ) {
+
+	var api_method = "http://api.wikimapia.org/?key=example&function=box&coordsby=bbox&bbox="+left+"%2C"+bottom+"%2C"+right+"%2C"+top+"&category="+categoryId_number+"&count=1000&format=json"
+	var api_method_2 = "http://api.wikimapia.org/?function=place.getnearest&key=example&lat="+centre1+"&lon="+centre2+"&category="+categoryId_number+"&format=json"
+
+	$.getJSON( api_method, function( data ) {
 				
 		if (!data.folder) { 
 		
