@@ -1,0 +1,1 @@
+## Wikimapia API data viewer
